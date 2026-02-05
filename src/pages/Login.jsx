@@ -26,8 +26,10 @@ function Login() {
       if (result.status == 200) {
         console.log(result.data);
         const token = result.data.token;
+        const user = result.data.existingUser
         // Store token in localStorage
         localStorage.setItem("token", token);
+        localStorage.setItem("user",JSON.stringify(user))
 
         alert("login successfull")
 

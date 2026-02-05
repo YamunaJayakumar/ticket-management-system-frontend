@@ -1,24 +1,38 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import DashboardSidebar from "../components/DashboardSidebar";
+import { getDashboardAPI } from "../services/AllAPI";
 
 function Dashboard() {
-  const dashboardData = {
-    totalTickets: 27,
-    highPriority: 6,
-    ticketsByStatus: {
-      Open: 12,
-      "In Progress": 8,
-      Resolved: 5,
-      Closed: 2,
-    },
-    ticketsPerDay: [
-      { date: "Jan 28", count: 3 },
-      { date: "Jan 29", count: 6 },
-      { date: "Jan 30", count: 2 },
-      { date: "Jan 31", count: 4 },
-      { date: "Feb 01", count: 5 },
-    ],
+  const [dashboardData, setDashboardData] = useState({
+     totalTickets: 0,
+  highPriority: 0,
+  ticketsByStatus: {},
+  ticketsPerDay: []  
+  })
+  const [loading,setLoading]=useState(true)
+  console.log(dashboardData)
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      console.log
+      const reqHeader =
+        { ' Authorization': `Bearer ${token}` }
+
+      const res = await getDashboardAPI(reqHeader);
+      console.log(res.data);
+      setDashboardData(res.data || {})
+
+    } catch (err) {
+      console.error("Failed to fetch dashboard:", err);
+    }finally{
+      setLoading(false)
+    }
   };
+
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -38,7 +52,7 @@ function Dashboard() {
             </h2>
           </div>
 
-          <div className="bg-white p-4 rounded shadow">
+          <div className="bg-white p-4 rounded shadow my-1">
             <p className="text-gray-500">High Priority Tickets</p>
             <h2 className="text-2xl font-bold">
               {dashboardData.highPriority}
@@ -47,19 +61,15 @@ function Dashboard() {
         </div>
 
         {/* Tickets By Status */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {Object.entries(dashboardData.ticketsByStatus).map(
-            ([status, count]) => (
-              <div
-                key={status}
-                className="bg-white p-4 rounded shadow text-center"
-              >
-                <p className="text-gray-500">{status}</p>
-                <h2 className="text-2xl font-bold">{count}</h2>
-              </div>
-            )
-          )}
-        </div>
+        {dashboardData.ticketByStatus &&
+          Object.entries(dashboardData.ticketByStatus).map(([status, count]) => (
+            <div key={status} className="bg-white p-4 rounded shadow text-center my-1">
+              <p className="text-gray-500">{status}</p>
+              <h2 className="text-2xl font-bold">{count}</h2>
+            </div>
+          ))
+        }
+
 
         {/* Tickets Created Per Day */}
         <div className="bg-white p-4 rounded shadow">
@@ -67,8 +77,8 @@ function Dashboard() {
             Tickets Created (Last 7 Days)
           </h3>
 
-          {dashboardData.ticketsPerDay.map((day) => (
-            <div key={day.date} className="flex items-center mb-3">
+          {dashboardData.ticketsPerDay && dashboardData.ticketsPerDay.map((day) => (
+            <div key={day.date} className="flex items-center mb-3 mt-5">
               <span className="w-20 text-sm text-gray-600">
                 {day.date}
               </span>
@@ -76,7 +86,7 @@ function Dashboard() {
               <div className="flex-1 bg-gray-200 rounded h-4 mx-2">
                 <div
                   className="bg-blue-500 h-4 rounded"
-                  style={{ width: `${day.count * 15}%` }}
+                  style={{ width: `${day.count * 7}%` }}
                 />
               </div>
 

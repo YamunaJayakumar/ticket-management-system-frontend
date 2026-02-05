@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { viewTicketAPI } from '../services/AllAPI';
-import { jwtDecode } from "jwt-decode";
+import jwtDecode from "jwt-decode";
 function TicketDetails() {
   const { id } = useParams(); // get ticket ID from URL
   const navigate = useNavigate();

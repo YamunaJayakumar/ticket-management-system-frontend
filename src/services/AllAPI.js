@@ -49,3 +49,12 @@ export const viewTicketAPI = async (id,reqHeader) => {
     reqHeader
   );
 };
+//get dashboard data
+export const getDashboardAPI = async (reqHeader) => {
+  return await commonAPI(
+    "GET",
+    `${serverURL}/dashboard`,
+    "",
+    reqHeader
+  );
+};
