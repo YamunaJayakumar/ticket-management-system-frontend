@@ -1,41 +1,64 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { viewTicketAPI } from '../services/AllAPI';
+import { jwtDecode } from "jwt-decode";
 function TicketDetails() {
+  const { id } = useParams(); // get ticket ID from URL
   const navigate = useNavigate();
 
-  // Sample logged-in user (replace with auth context / JWT)
-  const loggedInUser = { id: "user123", role: "User" };
+  // States
+  const [ticket, setTicket] = useState(null);
+  console.log(ticket);
+   // null initially
+  const [status, setStatus] = useState("");
+  const [priority, setPriority] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const token = localStorage.getItem("token");
+  let loggedInUser = null;
 
-  const ticket = {
-    id: "ticket123",
-    title: "Login button not working",
-    status: "Open",
-    priority: "High",
-    description: "The login button on the homepage does not trigger any action.",
-    assignedTo: { id: "user123", name: "John Doe" },
-    createdBy: { id: "user456", name: "Alice" },
-    category: "UI Issue",
-    createdAt: "2026-02-02",
-    activityLog: [
-      { message: "Ticket created", timestamp: "2026-02-02 10:00 AM" },
-      { message: "Assigned to John Doe", timestamp: "2026-02-02 11:00 AM" },
-      { message: "Status changed to Open", timestamp: "2026-02-02 11:30 AM" },
-    ],
-    comments: [
-      { user: "Alice", comment: "Please fix this asap.", createdAt: "2026-02-02 12:00 PM" },
-      { user: "John Doe", comment: "Looking into it.", createdAt: "2026-02-02 12:30 PM" },
-    ],
+  if (token) {
+   const decoded = jwtDecode(token);
+    // Assuming your token has "userId" and "role"
+    loggedInUser = { id: decoded.id, role: decoded.role };
+  }
+
+  console.log(loggedInUser);
+
+  // Fetch ticket from backend
+  const fetchTicket = async () => {
+    try {
+      const reqHeader = {
+        Authorization: `Bearer ${localStorage.getItem("token")}`, // if backend needs auth
+      };
+
+      const response = await viewTicketAPI(id, reqHeader);
+      setTicket(response.data); // set ticket
+      setStatus(response.data.status?.name || ""); // initialize status
+      setPriority(response.data.priority?.name || ""); // initialize priority
+      setLoading(false);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to fetch ticket");
+      setLoading(false);
+    }
   };
 
-  const [status, setStatus] = useState(ticket.status);
-  const [priority, setPriority] = useState(ticket.priority);
-  const canUpdate = loggedInUser.role === "Admin" || ticket.assignedTo.id === loggedInUser.id;
+  useEffect(() => {
+    fetchTicket();
+  }, [id]);
+
+  // Check if user can update
+  const canUpdate = loggedInUser.role === "Admin" || ticket?.assignedTo?._id === loggedInUser.id;
 
   const handleUpdate = () => {
     console.log("Updating ticket:", { status, priority });
     alert(`Ticket updated: Status = ${status}, Priority = ${priority}`);
+    // Call backend API to update ticket here
   };
+
+  if (loading) return <p>Loading ticket...</p>;
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (!ticket) return <p>No ticket found</p>;
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -46,8 +69,8 @@ function TicketDetails() {
           <div>
             <h1 className="text-2xl font-bold text-gray-800">{ticket.title}</h1>
             <div className="flex flex-wrap items-center gap-3 mt-2">
-              <span className="px-3 py-1 rounded-md text-blue-600 border border-blue-600 text-sm">{status}</span>
-              <span className="px-3 py-1 rounded-md text-orange-600 border border-orange-600 text-sm">{priority}</span>
+              status:<span className="px-3 py-1 rounded-md text-blue-600 border border-blue-600 text-sm">{status}</span>
+              priority:<span className="px-3 py-1 rounded-md text-orange-600 border border-orange-600 text-sm">{priority?priority:'N/A'}</span>
             </div>
           </div>
           <button
@@ -61,9 +84,9 @@ function TicketDetails() {
         {/* Ticket Info */}
         <div className="border-t border-b py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <p><span className="font-semibold">Description:</span> {ticket.description}</p>
-          <p><span className="font-semibold">Assigned To:</span> {ticket.assignedTo.name}</p>
-          <p><span className="font-semibold">Category:</span> {ticket.category}</p>
-          <p><span className="font-semibold">Created By:</span> {ticket.createdBy.name}</p>
+          <p><span className="font-semibold">Assigned To:</span> {ticket.assignedTo?.name || "Unassigned"}</p>
+          <p><span className="font-semibold">Category:</span> {ticket.category?.name || "N/A"}</p>
+          <p><span className="font-semibold">Created By:</span> {ticket.createdBy?.name || "N/A"}</p>
           <p><span className="font-semibold">Created At:</span> {ticket.createdAt}</p>
         </div>
 
@@ -114,7 +137,7 @@ function TicketDetails() {
         <div>
           <h2 className="text-lg font-semibold mb-2">Activity Timeline</h2>
           <ul className="space-y-2">
-            {ticket.activityLog.map((log, idx) => (
+            {ticket.activityLog?.map((log, idx) => (
               <li key={idx} className="bg-gray-50 px-3 py-2 rounded-md text-sm text-gray-700">
                 {log.message} <span className="text-gray-400 text-xs">({log.timestamp})</span>
               </li>
@@ -126,7 +149,7 @@ function TicketDetails() {
         <div>
           <h2 className="text-lg font-semibold mb-2">Comments</h2>
           <ul className="space-y-2 mb-4">
-            {ticket.comments.map((c, idx) => (
+            {ticket.comments?.map((c, idx) => (
               <li key={idx} className="bg-gray-50 p-3 rounded-md">
                 <p className="text-sm text-gray-800">{c.comment}</p>
                 <p className="text-xs text-gray-500 mt-1">
