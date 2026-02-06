@@ -58,3 +58,41 @@ export const getDashboardAPI = async (reqHeader) => {
     reqHeader
   );
 };
+
+//--------------------admin--------------------------
+//get agent list
+export const getAgentListAPI = async (reqHeader) => {
+  return await commonAPI(
+    "GET",
+    `${serverURL}/admin/agents`,
+    "",
+    reqHeader
+  );
+};
+//add agent
+export const addAgentAPI = async (reqHeader,reqBody) => {
+  return await commonAPI(
+    "POST",
+    `${serverURL}/admin/agents'`,
+    reqBody,
+    reqHeader
+  );
+};
+//update agent
+export const updateAgentAPI = async (reqHeader,reqBody,id) => {
+  return await commonAPI(
+    "GET",
+    `${serverURL}/admin/agents/${id}'`,
+    reqBody,
+    reqHeader
+  );
+};
+//remove agent
+export const removeAgentAPI = async (reqHeader,id) => {
+  return await commonAPI(
+    "GET",
+    `${serverURL}/admin/agents/${id}'`,
+    {},
+    reqHeader
+  );
+};
