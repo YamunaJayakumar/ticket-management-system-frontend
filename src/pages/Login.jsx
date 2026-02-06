@@ -29,11 +29,15 @@ function Login() {
         const user = result.data.existingUser
         // Store token in localStorage
         localStorage.setItem("token", token);
-        localStorage.setItem("user",JSON.stringify(user))
+        localStorage.setItem("user", JSON.stringify(user))
 
         alert("login successfull")
+        if (user?.role == "admin") {
+          navigate('/admin/dashboard')
+        } else {
+          navigate('/dashboard')
+        }
 
-        navigate('/dashboard')
 
       }
       else {
