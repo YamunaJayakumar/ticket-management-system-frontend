@@ -1,146 +1,343 @@
 import React, { useState } from "react";
-import AdminSidebar from "../components/AdminSidebar";
+import { FiSearch, FiBell, FiChevronDown, FiPlus, FiBarChart2, FiAlertTriangle, FiCheckCircle, FiClock } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/Navbar";
 
 const fakeDashboardData = {
-  totalTickets: 12,
-  highPriority: 3,
-  ticketsByStatus: {
+  openTickets: 20,
+  activeTickets: 30,
+  totalIncidents: 21,
+  criticalIncidents: 0,
+  slaBreaches: 0,
+  onSchedule: 0,
+  systemHealth: 100,
+  slaCompliance: 4.5,
+  breached: 14,
+  breachedIncidents: 7,
+  atRisk: 0,
+  slaAchieved: 1,
+  avgResolution: "21h",
+  incidentsByStatus: {
     Open: 5,
-    "In Progress": 4,
-    Closed: 3
+    "In Progress": 10,
+    Closed: 6
   },
-  ticketsPerDay: [
-    { date: "2026-02-01", count: 2 },
-    { date: "2026-02-02", count: 1 },
-    { date: "2026-02-03", count: 3 },
-    { date: "2026-02-04", count: 2 },
-    { date: "2026-02-05", count: 2 },
-    { date: "2026-02-06", count: 2 },
-    { date: "2026-02-07", count: 0 },
+  incidentsByPriority: {
+    Critical: 0,
+    High: 3,
+    Medium: 8,
+    Low: 10
+  },
+  weeklyVolume: [
+    { day: "Mon", incoming: 12, resolved: 10 },
+    { day: "Tue", incoming: 15, resolved: 13 },
+    { day: "Wed", incoming: 8, resolved: 11 },
+    { day: "Thu", incoming: 18, resolved: 15 },
+    { day: "Fri", incoming: 14, resolved: 16 },
+    { day: "Sat", incoming: 5, resolved: 8 },
+    { day: "Sun", incoming: 3, resolved: 5 },
   ],
 };
 
-const fakeAgents = [
-  { id: "A001", name: "Agent A", email: "agentA@test.com", activeTickets: 2 },
-  { id: "A002", name: "Agent B", email: "agentB@test.com", activeTickets: 1 },
-  { id: "A003", name: "Agent C", email: "agentC@test.com", activeTickets: 0 },
-];
 function DashboardAdmin() {
-    const [dashboardData, setDashboardData] = useState(fakeDashboardData);
-  const [agents, setAgents] = useState(fakeAgents);
-  const [activePage, setActivePage] = useState("dashboard");
+  const navigate = useNavigate();
+  const [dashboardData] = useState(fakeDashboardData);
+  const [timeRange, setTimeRange] = useState("This Month");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-       <AdminSidebar/>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+
       {/* Main Content */}
-      <div className="flex-1 p-6">
-        {activePage === "dashboard" && (
-          <div>
-            <h1 className="text-2xl font-bold mb-6">Dashboard Overview</h1>
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Page Header */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900">Executive Overview</h1>
+            <p className="text-sm text-gray-500 mt-1">Real-time operational intelligence and SLA monitoring</p>
+          </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white p-4 rounded shadow">
-                <p className="text-gray-500">Total Tickets</p>
-                <h2 className="text-2xl font-bold">{dashboardData.totalTickets}</h2>
-              </div>
-              <div className="bg-white p-4 rounded shadow">
-                <p className="text-gray-500">High Priority Tickets</p>
-                <h2 className="text-2xl font-bold">{dashboardData.highPriority}</h2>
-              </div>
-              {Object.entries(dashboardData.ticketsByStatus).map(([status, count]) => (
-                <div key={status} className="bg-white p-4 rounded shadow text-center">
-                  <p className="text-gray-500">{status}</p>
-                  <h2 className="text-2xl font-bold">{count}</h2>
+          {/* Metrics Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {/* Open Tickets */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">OPEN TICKETS</p>
+                  <h2 className="text-4xl font-bold text-gray-900">{dashboardData.openTickets}</h2>
+                  <p className="text-xs text-gray-600 mt-2">{dashboardData.activeTickets} active</p>
                 </div>
-              ))}
+                <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <FiBarChart2 className="w-5 h-5 text-white" />
+                </div>
+              </div>
             </div>
 
-            {/* Tickets Created Per Day */}
-            <div className="bg-white p-4 rounded shadow mb-6">
-              <h3 className="font-bold mb-4">Tickets Created (Last 7 Days)</h3>
-              {dashboardData.ticketsPerDay.map((day) => (
-                <div key={day.date} className="flex items-center mb-3">
-                  <span className="w-20 text-sm text-gray-600">{day.date}</span>
-                  <div className="flex-1 bg-gray-200 rounded h-4 mx-2">
-                    <div className="bg-blue-500 h-4 rounded" style={{ width: `${day.count * 10}%` }} />
+            {/* Total Incidents */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">TOTAL INCIDENTS</p>
+                  <h2 className="text-4xl font-bold text-gray-900">{dashboardData.totalIncidents}</h2>
+                  <p className="text-xs text-gray-600 mt-2">All time</p>
+                </div>
+                <div className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center">
+                  <FiAlertTriangle className="w-5 h-5 text-white" />
+                </div>
+              </div>
+            </div>
+
+            {/* Critical Incidents */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">CRITICAL INCIDENTS</p>
+                  <h2 className="text-4xl font-bold text-gray-900">{dashboardData.criticalIncidents}</h2>
+                  <p className="text-xs text-green-600 mt-2 flex items-center">
+                    <span className="mr-1">✓</span> All clear
+                  </p>
+                </div>
+                <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                  <FiAlertTriangle className="w-5 h-5 text-white" />
+                </div>
+              </div>
+            </div>
+
+            {/* SLA Breaches */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">SLA BREACHES</p>
+                  <h2 className="text-4xl font-bold text-gray-900">{dashboardData.slaBreaches}</h2>
+                  <p className="text-xs text-green-600 mt-2">100% compliant</p>
+                </div>
+                <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                  <FiClock className="w-5 h-5 text-white" />
+                </div>
+              </div>
+            </div>
+
+            {/* On Schedule */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">ON SCHEDULE</p>
+                  <h2 className="text-4xl font-bold text-gray-900">{dashboardData.onSchedule}</h2>
+                </div>
+                <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                  <FiCheckCircle className="w-5 h-5 text-white" />
+                </div>
+              </div>
+            </div>
+
+            {/* System Health */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">SYSTEM HEALTH</p>
+                  <h2 className="text-4xl font-bold text-gray-900">{dashboardData.systemHealth}%</h2>
+                  <p className="text-xs text-green-600 mt-2">Optimal</p>
+                </div>
+                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                  <FiCheckCircle className="w-5 h-5 text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Incidents by Status & Priority */}
+            <div className="space-y-6">
+              {/* Incidents by Status */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-gray-900">Incidents by Status</h3>
+                  <span className="text-xs text-gray-500">21 total</span>
+                </div>
+                <p className="text-xs text-gray-600 mb-4">Current distribution</p>
+                <div className="space-y-3">
+                  {Object.entries(dashboardData.incidentsByStatus).map(([status, count]) => (
+                    <div key={status} className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700">{status}</span>
+                      <span className="text-sm font-semibold text-gray-900">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Incidents by Priority */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-gray-900">Incidents by Priority</h3>
+                  <span className="text-xs text-gray-500">21 total</span>
+                </div>
+                <p className="text-xs text-gray-600 mb-4">Breakdown by priority level</p>
+                <div className="space-y-3">
+                  {Object.entries(dashboardData.incidentsByPriority).map(([priority, count]) => (
+                    <div key={priority} className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700">{priority}</span>
+                      <span className="text-sm font-semibold text-gray-900">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Middle Column - Weekly Volume */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Weekly Volume</h3>
+                  <p className="text-xs text-gray-600 mt-1">Incoming vs Resolved volume</p>
+                </div>
+                <span className="text-xs text-gray-500">Last 7 Days</span>
+              </div>
+
+              {/* Chart Area */}
+              <div className="space-y-4 mt-6">
+                {dashboardData.weeklyVolume.map((day) => {
+                  const maxValue = 20;
+                  const incomingWidth = (day.incoming / maxValue) * 100;
+                  const resolvedWidth = (day.resolved / maxValue) * 100;
+
+                  return (
+                    <div key={day.day} className="space-y-1">
+                      {/* Day Label */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-gray-700 w-12">{day.day}</span>
+                        <div className="flex-1 mx-3">
+                          {/* Incoming Bar */}
+                          <div className="mb-1">
+                            <div className="flex items-center">
+                              <div
+                                className="bg-blue-500 h-6 rounded-r transition-all duration-300 hover:bg-blue-600 flex items-center justify-end pr-2"
+                                style={{ width: `${incomingWidth}%` }}
+                              >
+                                {day.incoming > 5 && (
+                                  <span className="text-xs font-semibold text-white">{day.incoming}</span>
+                                )}
+                              </div>
+                              {day.incoming <= 5 && (
+                                <span className="text-xs font-semibold text-gray-700 ml-2">{day.incoming}</span>
+                              )}
+                            </div>
+                          </div>
+                          {/* Resolved Bar */}
+                          <div>
+                            <div className="flex items-center">
+                              <div
+                                className="bg-green-500 h-6 rounded-r transition-all duration-300 hover:bg-green-600 flex items-center justify-end pr-2"
+                                style={{ width: `${resolvedWidth}%` }}
+                              >
+                                {day.resolved > 5 && (
+                                  <span className="text-xs font-semibold text-white">{day.resolved}</span>
+                                )}
+                              </div>
+                              {day.resolved <= 5 && (
+                                <span className="text-xs font-semibold text-gray-700 ml-2">{day.resolved}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center justify-center space-x-8 mt-6 pt-4 border-t border-gray-200">
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                  <span className="text-xs font-medium text-gray-700">Incoming Tickets</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <span className="text-xs font-medium text-gray-700">Resolved Tickets</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - SLA Performance */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-sm font-semibold text-gray-900">SLA Performance</h3>
+                <button className="text-xs text-teal-600 hover:text-teal-700 font-medium">Manage SLAs</button>
+              </div>
+
+              {/* SLA Compliance Rate */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-gray-600">SLA Compliance Rate</span>
+                  <span className="text-xs text-red-600">↓4%</span>
+                </div>
+                <div className="flex items-baseline">
+                  <span className="text-3xl font-bold text-gray-900">{dashboardData.slaCompliance}%</span>
+                  <span className="text-xs text-gray-500 ml-2">(1 of 22 met)</span>
+                </div>
+              </div>
+
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                {/* Breached */}
+                <div>
+                  <div className="flex items-center space-x-1 mb-1">
+                    <FiAlertTriangle className="w-3 h-3 text-gray-400" />
+                    <span className="text-xs text-gray-600">Breached</span>
                   </div>
-                  <span className="text-sm font-medium">{day.count}</span>
+                  <p className="text-2xl font-bold text-gray-900">{dashboardData.breached}</p>
+                  <p className="text-xs text-gray-500">Incidents: {dashboardData.breachedIncidents}</p>
                 </div>
-              ))}
+
+                {/* At Risk */}
+                <div>
+                  <div className="flex items-center space-x-1 mb-1">
+                    <FiClock className="w-3 h-3 text-gray-400" />
+                    <span className="text-xs text-gray-600">At Risk</span>
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900">{dashboardData.atRisk}</p>
+                  <p className="text-xs text-gray-500">About to exceed plan</p>
+                </div>
+
+                {/* SLA Achieved */}
+                <div>
+                  <div className="flex items-center space-x-1 mb-1">
+                    <FiCheckCircle className="w-3 h-3 text-gray-400" />
+                    <span className="text-xs text-gray-600">SLA Achieved</span>
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900">{dashboardData.slaAchieved}</p>
+                  <p className="text-xs text-gray-500">On track</p>
+                </div>
+
+                {/* Avg Resolution */}
+                <div>
+                  <div className="flex items-center space-x-1 mb-1">
+                    <FiClock className="w-3 h-3 text-gray-400" />
+                    <span className="text-xs text-gray-600">Avg Resolution</span>
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900">{dashboardData.avgResolution}</p>
+                  <p className="text-xs text-gray-500">Avg average time</p>
+                </div>
+              </div>
+
+              {/* View Breached Button */}
+              <button className="w-full bg-[#1e3a4c] hover:bg-[#2a4a5e] text-white py-3 px-4 rounded-lg transition text-sm font-medium">
+                View Breached (14)
+              </button>
             </div>
           </div>
-        )}
-
-        {activePage === "agents" && (
-          <div>
-            <h1 className="text-2xl font-bold mb-6">Agents</h1>
-            <table className="w-full table-auto bg-white rounded shadow">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="p-2">Name</th>
-                  <th className="p-2">Email</th>
-                  <th className="p-2">Active Tickets</th>
-                  <th className="p-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {agents.map((agent) => (
-                  <tr key={agent.id} className="border-b">
-                    <td className="p-2">{agent.name}</td>
-                    <td className="p-2">{agent.email}</td>
-                    <td className="p-2">{agent.activeTickets}</td>
-                    <td className="p-2">
-                      <button className="bg-green-500 text-white px-3 py-1 rounded mr-2">Edit</button>
-                      <button className="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <button className="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Add Agent</button>
-          </div>
-        )}
-
-        {activePage === "settings" && (
-          <div>
-            <h1 className="text-2xl font-bold mb-6">Settings</h1>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white p-4 rounded shadow">
-                <h3 className="font-bold mb-2">Statuses</h3>
-                <ul>
-                  {Object.keys(dashboardData.ticketsByStatus).map((s) => (
-                    <li key={s}>{s}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="bg-white p-4 rounded shadow">
-                <h3 className="font-bold mb-2">Priorities</h3>
-                <ul>
-                  {["Low", "Medium", "High"].map((p) => (
-                    <li key={p}>{p}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="bg-white p-4 rounded shadow">
-                <h3 className="font-bold mb-2">Categories</h3>
-                <ul>
-                  {["Bug", "Feature", "Task"].map((c) => (
-                    <li key={c}>{c}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            <button className="mt-4 bg-blue-500 text-white px-4 py-2 rounded">
-              Add Status / Priority / Category
-            </button>
-          </div>
-        )}
+        </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default DashboardAdmin
+export default DashboardAdmin;

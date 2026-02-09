@@ -8,7 +8,6 @@ import TicketDetails from "./pages/TicketDetails"
 import ProfilePage from "./pages/ProfilePage"
 import TicketsPage from "./admin/pages/TicketsPage"
 import DashboardAdmin from "./admin/pages/DashboardAdmin"
-import AgentsPage from "./admin/pages/AgentsPage"
 import SettingPage from "./admin/pages/SettingPage"
 import AssignTicketPage from "./admin/pages/AssignTicketPage"
 import AgentForm from "./admin/pages/AgentForm"
@@ -33,8 +32,6 @@ function App() {
         <Route path="/admin/dashboard" element={<DashboardAdmin />}></Route>
 
         <Route path="/admin/tickets" element={<TicketsPage />}></Route>
-
-        <Route path="/admin/agents" element={<AgentsPage />}></Route>
 
         <Route path="/admin/settings" element={<SettingPage />}></Route>
 

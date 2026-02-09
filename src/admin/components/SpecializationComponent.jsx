@@ -1,45 +1,39 @@
 import React, { useEffect, useState } from "react";
-import { FiEdit, FiTrash2, FiPlus, FiX, FiCheck, FiActivity } from "react-icons/fi";
-import { addPrioritiesAPI, deletePrioritiesAPI, getPrioritiesAPI, updatePrioritiesAPI } from "../../services/AllAPI";
+import { FiEdit, FiTrash2, FiPlus, FiX, FiCheck, FiZap, FiActivity } from "react-icons/fi";
+import { addSpecializationsAPI, getSpecializationsAPI, toggleSpecializationAPI } from "../../services/AllAPI";
 
-function PriorityComponent() {
-  const [priorityData, setPriorityData] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedPriority, setSelectedPriority] = useState(null);
+function SpecializationComponent() {
+  const [specData, setSpecData] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newPriority, setNewPriority] = useState({ name: "", description: "" });
+  const [newSpec, setNewSpec] = useState({ name: "", description: "" });
 
   useEffect(() => {
-    handlePriority();
+    handleFetchSpecs();
   }, []);
 
   const token = localStorage.getItem("token");
   const reqHeader = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-  const handlePriority = async () => {
+  const handleFetchSpecs = async () => {
     try {
-      const result = await getPrioritiesAPI(reqHeader);
+      const result = await getSpecializationsAPI(reqHeader);
       if (result.status === 200) {
-        setPriorityData(result.data);
+        setSpecData(result.data);
       } else {
-        console.error("Failed to fetch priorities:", result.data);
+        console.error("Failed to fetch specializations:", result.data);
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    const reqBody = { name: newPriority.name, description: newPriority.description };
+  const handleToggleSpec = async (id) => {
     try {
-      const result = await addPrioritiesAPI(reqBody, reqHeader);
+      const result = await toggleSpecializationAPI(id, reqHeader);
       if (result.status === 200) {
-        setPriorityData(prev => [...prev, result.data]);
-        setShowAddModal(false);
-        setNewPriority({ name: "", description: "" });
+        setSpecData(prev => prev.map(spec => spec._id === id ? result.data : spec));
       } else {
-        alert("Failed to create priority");
+        alert("Something went wrong");
       }
     } catch (err) {
       console.error(err);
@@ -47,32 +41,17 @@ function PriorityComponent() {
     }
   };
 
-  const handleUpdate = async (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault();
-    const reqBody = { name: selectedPriority.name, description: selectedPriority.description };
+    const reqBody = { name: newSpec.name, description: newSpec.description };
     try {
-      const result = await updatePrioritiesAPI(selectedPriority._id, reqHeader, reqBody);
+      const result = await addSpecializationsAPI(reqBody, reqHeader);
       if (result.status === 200) {
-        setShowModal(false);
-        setSelectedPriority(null);
-        handlePriority();
+        setSpecData(prev => [...prev, result.data]);
+        setShowAddModal(false);
+        setNewSpec({ name: "", description: "" });
       } else {
-        alert("Failed to update priority");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Update failed");
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this priority level?")) return;
-    try {
-      const result = await deletePrioritiesAPI(id, reqHeader);
-      if (result.status === 200) {
-        setPriorityData(prev => prev.filter(item => item._id !== id));
-      } else {
-        alert("Error deleting priority");
+        alert("Failed to create specialization");
       }
     } catch (err) {
       console.error(err);
@@ -84,13 +63,13 @@ function PriorityComponent() {
     <div className="bg-white">
       {/* Search & Actions Header */}
       <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Priority Tiers</h3>
+        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Agent Specializations</h3>
         <button
           onClick={() => setShowAddModal(true)}
           className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl shadow-sm shadow-teal-700/10 flex items-center space-x-2 transition-all active:scale-95 text-sm font-bold"
         >
           <FiPlus className="w-4 h-4" />
-          <span>New Priority</span>
+          <span>New Specialization</span>
         </button>
       </div>
 
@@ -99,39 +78,46 @@ function PriorityComponent() {
         <table className="w-full text-left">
           <thead>
             <tr className="bg-white border-b border-gray-100">
-              <th className="px-8 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Priority Name</th>
-              <th className="px-8 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Description</th>
+              <th className="px-8 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Expertise Name</th>
+              <th className="px-8 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Domain Description</th>
+              <th className="px-8 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
               <th className="px-8 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {priorityData.map((item, index) => (
-              <tr key={index} className="group hover:bg-teal-50/30 transition-colors">
+            {specData.map((item, index) => (
+              <tr key={item._id} className={`group hover:bg-teal-50/30 transition-colors ${!item.isActive ? 'opacity-60 grayscale-[0.5]' : ''}`}>
                 <td className="px-8 py-5">
                   <div className="flex items-center space-x-3">
-                    <div className={`w-2 h-2 rounded-full shadow-sm ${item.name.toLowerCase().includes('high') || item.name.toLowerCase().includes('urgent') || item.name.toLowerCase().includes('critical')
-                        ? 'bg-rose-500 shadow-rose-500/20'
-                        : 'bg-teal-500 shadow-teal-500/20'
-                      }`}></div>
+                    <div className={`p-2 rounded-lg ${item.isActive ? 'bg-teal-50 text-teal-600' : 'bg-gray-100 text-gray-400'}`}>
+                      <FiZap className="w-4 h-4" />
+                    </div>
                     <span className="font-semibold text-gray-700 text-sm">{item.name}</span>
                   </div>
                 </td>
                 <td className="px-8 py-5">
                   <span className="text-gray-500 text-sm line-clamp-1 max-w-xs">{item.description}</span>
                 </td>
+                <td className="px-8 py-5 text-center">
+                  <button
+                    onClick={() => handleToggleSpec(item._id)}
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${item.isActive
+                      ? "bg-teal-100 text-teal-700 hover:bg-teal-200"
+                      : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                      }`}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full mr-2 ${item.isActive ? 'bg-teal-500' : 'bg-gray-400'}`}></div>
+                    {item.isActive ? "Active" : "Inactive"}
+                  </button>
+                </td>
                 <td className="px-8 py-5 text-right">
                   <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      onClick={() => {
-                        setSelectedPriority(item);
-                        setShowModal(true);
-                      }}
                       className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all"
                     >
                       <FiEdit className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(item._id)}
                       className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
                     >
                       <FiTrash2 className="w-4 h-4" />
@@ -145,59 +131,51 @@ function PriorityComponent() {
       </div>
 
       {/* Empty State */}
-      {priorityData.length === 0 && (
+      {specData.length === 0 && (
         <div className="p-12 text-center">
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
             <FiActivity className="w-8 h-8 text-gray-300" />
           </div>
-          <p className="text-gray-400 text-sm font-medium">No priority tiers defined yet.</p>
+          <p className="text-gray-400 text-sm font-medium">No specializations defined yet.</p>
         </div>
       )}
 
-      {/* Modals */}
-      {(showAddModal || showModal) && (
+      {/* Add Specialization Modal */}
+      {showAddModal && (
         <div className="fixed inset-0 bg-[#0a0f1e]/40 backdrop-blur-sm flex items-center justify-center z-[100] px-4">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200 overflow-hidden">
             <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-900">{showAddModal ? "New Priority" : "Edit Priority"}</h3>
+              <h3 className="text-xl font-bold text-gray-900">New Specialization</h3>
               <button
-                onClick={() => { setShowAddModal(false); setShowModal(false); }}
+                onClick={() => setShowAddModal(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-all"
               >
                 <FiX className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={showAddModal ? handleCreate : handleUpdate} className="p-8 space-y-6 bg-white overflow-y-auto max-h-[80vh]">
+            <form onSubmit={handleCreate} className="p-8 space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Priority Name</label>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Expertise Name</label>
                   <input
                     type="text"
-                    value={showAddModal ? newPriority.name : selectedPriority?.name || ""}
-                    onChange={(e) =>
-                      showAddModal
-                        ? setNewPriority({ ...newPriority, name: e.target.value })
-                        : setSelectedPriority({ ...selectedPriority, name: e.target.value })
-                    }
+                    value={newSpec.name}
+                    onChange={(e) => setNewSpec({ ...newSpec, name: e.target.value })}
                     className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all placeholder-gray-400 font-medium"
-                    placeholder="e.g. Critical"
+                    placeholder="e.g. Infrastructure Security"
                     required
                     autoFocus
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Description</label>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Domain Description</label>
                   <textarea
-                    value={showAddModal ? newPriority.description : selectedPriority?.description || ""}
-                    onChange={(e) =>
-                      showAddModal
-                        ? setNewPriority({ ...newPriority, description: e.target.value })
-                        : setSelectedPriority({ ...selectedPriority, description: e.target.value })
-                    }
+                    value={newSpec.description}
+                    onChange={(e) => setNewSpec({ ...newSpec, description: e.target.value })}
                     className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all placeholder-gray-400 font-medium min-h-[100px]"
-                    placeholder="Describe when to use this priority..."
+                    placeholder="e.g. Expertise in network security, firewall management, and incident response..."
                     required
                   />
                 </div>
@@ -206,7 +184,7 @@ function PriorityComponent() {
               <div className="flex items-center space-x-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => { setShowAddModal(false); setShowModal(false); }}
+                  onClick={() => setShowAddModal(false)}
                   className="flex-1 px-6 py-3.5 border border-gray-200 text-gray-600 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95"
                 >
                   Cancel
@@ -215,8 +193,8 @@ function PriorityComponent() {
                   type="submit"
                   className="flex-1 px-6 py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white rounded-2xl font-bold shadow-lg shadow-teal-500/20 transition-all active:scale-95 flex items-center justify-center space-x-2"
                 >
-                  <FiCheck className="w-4 h-4" />
-                  <span>{showAddModal ? "Create" : "Save Changes"}</span>
+                  <FiPlus className="w-4 h-4" />
+                  <span>Add Specialization</span>
                 </button>
               </div>
             </form>
@@ -227,4 +205,4 @@ function PriorityComponent() {
   );
 }
 
-export default PriorityComponent;
+export default SpecializationComponent;
