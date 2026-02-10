@@ -6,6 +6,7 @@ import SpecializationComponent from "../components/SpecializationComponent";
 import AgentsComponent from "../components/AgentsComponent";
 import TeamComponent from "../components/TeamComponent";
 import CategoryComponent from "../components/CategoryComponent";
+import UserManagementComponent from "../components/UserManagementComponent";
 import { FiSettings, FiCheckCircle, FiActivity, FiZap, FiChevronRight, FiUsers, FiLayers, FiGrid } from "react-icons/fi";
 
 function SettingPage() {
@@ -15,6 +16,7 @@ function SettingPage() {
     { id: "agents", label: "Agent Management", icon: <FiUsers />, description: "Configure and manage support roster" },
     { id: "teams", label: "Team Management", icon: <FiLayers />, description: "Organize agents into functional units" },
     { id: "categories", label: "Category Management", icon: <FiGrid />, description: "Define ticket classification types" },
+    { id: "users", label: "User Management", icon: <FiUsers />, description: "Global participant directory" },
     { id: "status", label: "Status Management", icon: <FiCheckCircle />, description: "Configure ticket lifecycle states" },
     { id: "priority", label: "Priority Levels", icon: <FiActivity />, description: "Manage incident urgency tiers" },
     { id: "specializations", label: "Agent Specializations", icon: <FiZap />, description: "Define expert domain expertise" },
@@ -25,6 +27,7 @@ function SettingPage() {
       case "agents": return <AgentsComponent />;
       case "teams": return <TeamComponent />;
       case "categories": return <CategoryComponent />;
+      case "users": return <UserManagementComponent />;
       case "status": return <StatusComponent />;
       case "priority": return <PriorityComponent />;
       case "specializations": return <SpecializationComponent />;

@@ -17,13 +17,14 @@ export const CreateTicketAPI = async (reqBody, reqHeader) => {
   return await commonAPI('POST', `${serverURL}/ticket/create`, reqBody, reqHeader)
 
 }
-// view tickets list (admin & user)
-export const getTicketsListAPI = async (reqHeader) => {
+//view ticketslist by admin and user
+export const getTicketsListAPI = async (queryParams, reqHeader) => {
   return await commonAPI(
     "GET",
     `${serverURL}/ticket/list`,
     "",
-    reqHeader
+    reqHeader,
+    queryParams
   );
 };
 //view ticket details
@@ -32,6 +33,15 @@ export const viewTicketAPI = async (id, reqHeader) => {
     "GET",
     `${serverURL}/ticket/${id}`,
     "",
+    reqHeader
+  );
+};
+//update ticket
+export const updateTicketAPI = async (id, reqBody, reqHeader) => {
+  return await commonAPI(
+    "PATCH",
+    `${serverURL}/ticket/update/${id}`,
+    reqBody,
     reqHeader
   );
 };
@@ -248,6 +258,16 @@ export const addMemberToTeamAPI = async (teamId, memberId, reqHeader) => {
     "PATCH",
     `${serverURL}/settings/teams/${teamId}/add-member`,
     { memberId },
+    reqHeader
+  );
+};
+
+// get all users (admin only)
+export const getAllUsersAPI = async (reqHeader) => {
+  return await commonAPI(
+    "GET",
+    `${serverURL}/admin/users`,
+    "",
     reqHeader
   );
 };

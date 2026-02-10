@@ -18,6 +18,7 @@ function Navbar() {
         ? [
             { name: "Dashboard", path: "/admin/dashboard" },
             { name: "Ticket Console", path: "/admin/tickets" },
+            { name: "Workforce Dispatch", path: "/admin/assign" },
         ]
         : [
             { name: "Dashboard", path: "/dashboard" },

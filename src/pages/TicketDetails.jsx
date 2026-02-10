@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { viewTicketAPI } from '../services/AllAPI';
-import jwtDecode from "jwt-decode";
 import Navbar from "../components/Navbar";
-import { FiClock, FiUser, FiTag, FiMessageSquare, FiActivity, FiArrowLeft, FiMoreVertical, FiPaperclip } from "react-icons/fi";
+import { FiClock, FiUser, FiTag, FiMessageSquare, FiActivity, FiArrowLeft, FiMoreVertical, FiPaperclip, FiCheck } from "react-icons/fi";
+import { viewTicketAPI, updateTicketAPI, getTeamsAPI, getPrioritiesAPI, getStatusAPI, getAgentListAPI } from '../services/AllAPI';
 
 function TicketDetails() {
   const { id } = useParams();
@@ -13,7 +12,14 @@ function TicketDetails() {
   const [ticket, setTicket] = useState(null);
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
+  const [assignedTeam, setAssignedTeam] = useState("");
+  const [assignedTo, setAssignedTo] = useState("");
+  const [teams, setTeams] = useState([]);
+  const [priorities, setPriorities] = useState([]);
+  const [statuses, setStatuses] = useState([]);
+  const [allAgents, setAllAgents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   const [error, setError] = useState("");
   const token = localStorage.getItem("token");
   let loggedInUser = null;
@@ -34,8 +40,10 @@ function TicketDetails() {
       };
       const response = await viewTicketAPI(id, reqHeader);
       setTicket(response.data);
-      setStatus(response.data.status?.name || "");
-      setPriority(response.data.priority?.name || "");
+      setStatus(response.data.status?._id || "");
+      setPriority(response.data.priority?._id || "");
+      setAssignedTeam(response.data.assignedTeam || "");
+      setAssignedTo(response.data.assignedTo?._id || "");
       setLoading(false);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to fetch ticket");
@@ -43,14 +51,54 @@ function TicketDetails() {
     }
   };
 
+  const fetchDropdownData = async () => {
+    try {
+      const reqHeader = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+      const [teamsRes, prioritiesRes, statusesRes, agentsRes] = await Promise.all([
+        getTeamsAPI(reqHeader),
+        getPrioritiesAPI(reqHeader),
+        getStatusAPI(reqHeader),
+        getAgentListAPI(reqHeader)
+      ]);
+      if (teamsRes.status === 200) setTeams(teamsRes.data);
+      if (prioritiesRes.status === 200) setPriorities(prioritiesRes.data);
+      if (statusesRes.status === 200) setStatuses(statusesRes.data);
+      if (agentsRes.status === 200) setAllAgents(agentsRes.data);
+    } catch (err) {
+      console.error("Failed to fetch dropdown data", err);
+    }
+  };
+
   useEffect(() => {
     fetchTicket();
+    if (loggedInUser?.role?.toLowerCase() === "admin") {
+      fetchDropdownData();
+    }
   }, [id]);
 
-  const canUpdate = loggedInUser?.role === "Admin" || ticket?.assignedTo?._id === loggedInUser?.id;
+  const canUpdate = loggedInUser?.role?.toLowerCase() === "admin" || ticket?.assignedTo?._id === loggedInUser?.id;
 
-  const handleUpdate = () => {
-    alert(`Ticket update feature coming soon!\nStatus = ${status}, Priority = ${priority}`);
+  const handleUpdate = async () => {
+    setUpdating(true);
+    try {
+      const reqHeader = { Authorization: `Bearer ${token}` };
+      const reqBody = {
+        status,
+        priority,
+        assignedTeam,
+        assignedTo: assignedTo || null
+      };
+      const response = await updateTicketAPI(id, reqBody, reqHeader);
+      if (response.status === 200) {
+        setTicket(response.data);
+        alert("Ticket updated successfully!");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update ticket");
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const getStatusColor = (s) => {
@@ -127,11 +175,11 @@ function TicketDetails() {
                       <span className="text-xs font-bold text-teal-600 uppercase tracking-widest mb-2 block">Ticket #{ticket._id?.slice(-6).toUpperCase()}</span>
                       <h1 className="text-3xl font-bold text-gray-900 leading-tight">{ticket.title}</h1>
                       <div className="flex items-center space-x-4 mt-4">
-                        <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(status)}`}>
-                          {status}
+                        <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(ticket.status?.name)}`}>
+                          {ticket.status?.name}
                         </div>
-                        <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPriorityColor(priority)}`}>
-                          {priority || 'Not Set'}
+                        <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPriorityColor(ticket.priority?.name)}`}>
+                          {ticket.priority?.name || 'Not Set'}
                         </div>
                       </div>
                     </div>
@@ -229,6 +277,10 @@ function TicketDetails() {
                     <span className="text-xs font-semibold text-gray-500 uppercase">Category</span>
                     <span className="text-sm font-bold text-gray-800 bg-gray-100 px-2 py-1 rounded">{ticket.category?.name || "N/A"}</span>
                   </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-gray-500 uppercase">Assigned Team</span>
+                    <span className="text-sm font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded border border-teal-100">{ticket.assignedTeam || "Unassigned"}</span>
+                  </div>
                   <div className="flex items-center justify-between pt-4 border-t border-gray-50">
                     <span className="text-xs font-semibold text-gray-500 uppercase">Created</span>
                     <span className="text-sm text-gray-600 flex items-center"><FiClock className="mr-1.5 w-3 h-3" /> {new Date(ticket.createdAt).toLocaleDateString()}</span>
@@ -286,26 +338,87 @@ function TicketDetails() {
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition duration-500">
                     <FiActivity className="w-24 h-24" />
                   </div>
-                  <h3 className="font-bold mb-4 relative z-10">Quick Resolution</h3>
+                  <h3 className="font-bold mb-4 relative z-10 flex items-center">
+                    <FiCheck className="mr-2 text-teal-400" />
+                    Manage Ticket
+                  </h3>
                   <div className="space-y-4 relative z-10">
                     <div>
-                      <label className="text-[10px] font-bold uppercase text-teal-400 mb-1 block">Status</label>
+                      <label className="text-[10px] font-bold uppercase text-teal-400 mb-1 block tracking-widest">Status</label>
                       <select
                         value={status}
                         onChange={(e) => setStatus(e.target.value)}
-                        className="w-full bg-[#2a4a5e] border-none rounded-lg text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500 transition"
+                        className="w-full bg-[#2a4a5e] border-none rounded-lg text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500 transition cursor-pointer"
                       >
-                        <option value="Open">Open</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Resolved">Resolved</option>
-                        <option value="Closed">Closed</option>
+                        {statuses.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
                       </select>
                     </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-teal-400 mb-1 block tracking-widest">Priority</label>
+                      <select
+                        value={priority}
+                        onChange={(e) => setPriority(e.target.value)}
+                        className="w-full bg-[#2a4a5e] border-none rounded-lg text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500 transition cursor-pointer"
+                      >
+                        {priorities.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+                      </select>
+                    </div>
+
+                    {loggedInUser?.role?.toLowerCase() === "admin" && (
+                      <>
+                        <div>
+                          <label className="text-[10px] font-bold uppercase text-teal-400 mb-1 block tracking-widest">Assign Team</label>
+                          <select
+                            value={assignedTeam}
+                            onChange={(e) => {
+                              setAssignedTeam(e.target.value);
+                              setAssignedTo(""); // Reset agent when team changes
+                            }}
+                            className="w-full bg-[#2a4a5e] border-none rounded-lg text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500 transition cursor-pointer"
+                          >
+                            <option value="">Unassigned</option>
+                            {teams.map((team, idx) => (
+                              <option key={idx} value={team.name}>{team.name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold uppercase text-teal-400 mb-1 block tracking-widest">Assign Individual Agent</label>
+                          <select
+                            value={assignedTo}
+                            onChange={(e) => setAssignedTo(e.target.value)}
+                            className="w-full bg-[#2a4a5e] border-none rounded-lg text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500 transition cursor-pointer"
+                            disabled={!assignedTeam}
+                          >
+                            <option value="">Select Agent</option>
+                            {allAgents
+                              .filter(agent => agent.teamName === assignedTeam)
+                              .map(agent => (
+                                <option key={agent._id} value={agent._id}>
+                                  {agent.name}
+                                </option>
+                              ))}
+                          </select>
+                          {!assignedTeam && <p className="text-[9px] text-teal-400/50 mt-1 italic">Select a team first</p>}
+                        </div>
+                      </>
+                    )}
+
                     <button
                       onClick={handleUpdate}
-                      className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 rounded-lg text-sm transition shadow-sm"
+                      disabled={updating}
+                      className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-gray-500 text-white font-bold py-2.5 rounded-lg text-sm transition shadow-md flex items-center justify-center space-x-2 mt-2"
                     >
-                      Update Ticket
+                      {updating ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                          <span>Updating...</span>
+                        </>
+                      ) : (
+                        <span>Save Changes</span>
+                      )}
                     </button>
                   </div>
                 </div>

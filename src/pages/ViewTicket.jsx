@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FiFilter, FiCalendar, FiChevronLeft, FiChevronRight, FiClock, FiPlus, FiMoreVertical, FiSearch } from "react-icons/fi";
-import { getTicketsListAPI } from "../services/AllAPI";
+import { getTicketsListAPI, getStatusAPI, getPrioritiesAPI } from "../services/AllAPI";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
@@ -9,22 +9,62 @@ function ViewTicket() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // States for filtering & pagination
   const [statusFilter, setStatusFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statuses, setStatuses] = useState([]);
+  const [priorities, setPriorities] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const ticketsPerPage = 10;
 
   useEffect(() => {
-    fetchTickets();
-  }, []);
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetchFilters();
+      fetchTickets();
+    } else {
+      setLoading(false);
+      navigate("/login"); // Redirect if no token
+    }
+  }, [statusFilter, priorityFilter]);
+
+  // Handle search with a slight delay or on Enter
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const delayDebounceFn = setTimeout(() => {
+        fetchTickets();
+      }, 500);
+      return () => clearTimeout(delayDebounceFn);
+    }
+  }, [searchQuery]);
+
+  const fetchFilters = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const reqHeader = { 'Authorization': `Bearer ${token}` };
+      const [statusRes, priorityRes] = await Promise.all([
+        getStatusAPI(reqHeader),
+        getPrioritiesAPI(reqHeader)
+      ]);
+      if (statusRes.status === 200) setStatuses(statusRes.data);
+      if (priorityRes.status === 200) setPriorities(priorityRes.data);
+    } catch (err) {
+      console.error("Failed to fetch filters:", err);
+    }
+  };
 
   const fetchTickets = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
       const reqHeader = { 'Authorization': `Bearer ${token}` };
-      const res = await getTicketsListAPI(reqHeader);
+      const queryParams = {
+        status: statusFilter,
+        priority: priorityFilter,
+        search: searchQuery
+      };
+      const res = await getTicketsListAPI(queryParams, reqHeader);
       setTickets(res.data || []);
     } catch (err) {
       console.error("Failed to fetch tickets:", err);
@@ -59,22 +99,24 @@ function ViewTicket() {
             <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2 border bg-white rounded-lg px-3 py-1.5 min-w-[150px]">
                 <FiFilter className="text-gray-400 w-4 h-4" />
-                <select className="text-sm bg-transparent focus:outline-none w-full border-none p-0">
-                  <option>Status (All)</option>
-                  <option>Open</option>
-                  <option>In Progress</option>
-                  <option>Resolved</option>
-                  <option>Closed</option>
+                <select
+                  className="text-sm bg-transparent focus:outline-none w-full border-none p-0 cursor-pointer"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="">Status (All)</option>
+                  {statuses.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
                 </select>
               </div>
 
               <div className="flex items-center gap-2 border bg-white rounded-lg px-3 py-1.5 min-w-[150px]">
-                <select className="text-sm bg-transparent focus:outline-none w-full border-none p-0">
-                  <option>Priority (All)</option>
-                  <option>Low</option>
-                  <option>Medium</option>
-                  <option>High</option>
-                  <option>Critical</option>
+                <select
+                  className="text-sm bg-transparent focus:outline-none w-full border-none p-0 cursor-pointer"
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                >
+                  <option value="">Priority (All)</option>
+                  {priorities.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
                 </select>
               </div>
 
@@ -87,11 +129,13 @@ function ViewTicket() {
               </div>
 
               <div className="ml-auto relative">
-                {/* <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" /> */}
+                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
                   placeholder="Find ticket..."
                   className="pl-9 pr-4 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 w-64"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>

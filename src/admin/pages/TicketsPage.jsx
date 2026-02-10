@@ -1,23 +1,39 @@
 import React, { useEffect, useState } from "react";
-import { FiEye, FiFilter, FiDownload, FiSearch, FiMoreVertical, FiCalendar, FiClock } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { FiEye, FiFilter, FiDownload, FiSearch, FiMoreVertical, FiCalendar, FiClock, FiUserPlus, FiLoader } from "react-icons/fi";
 import Navbar from "../../components/Navbar";
-import { getTicketsListAPI, viewTicketAPI } from "../../services/AllAPI";
+import { getTicketsListAPI, viewTicketAPI, getTeamsAPI, updateTicketAPI } from "../../services/AllAPI";
 
 function TicketsPage() {
+    const navigate = useNavigate();
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [viewTicket, setViewTicket] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [teams, setTeams] = useState([]);
+    const [assigning, setAssigning] = useState(false);
 
     useEffect(() => {
         fetchTickets();
+        fetchTeams();
     }, []);
+
+    const fetchTeams = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const reqHeader = { Authorization: `Bearer ${token}` };
+            const res = await getTeamsAPI(reqHeader);
+            if (res.status === 200) setTeams(res.data);
+        } catch (err) {
+            console.error("Failed to fetch teams:", err);
+        }
+    };
 
     const fetchTickets = async () => {
         try {
             const token = localStorage.getItem("token");
             const headers = { Authorization: `Bearer ${token}` };
-            const result = await getTicketsListAPI(headers);
+            const result = await getTicketsListAPI({}, headers);
             if (result.status === 200) {
                 setTickets(result.data);
             }
@@ -41,6 +57,26 @@ function TicketsPage() {
         } catch (err) {
             console.error(err);
             alert("Something went wrong");
+        }
+    };
+
+    const handleQuickAssign = async (teamName) => {
+        if (!teamName || !viewTicket) return;
+        setAssigning(true);
+        try {
+            const token = localStorage.getItem("token");
+            const reqHeader = { Authorization: `Bearer ${token}` };
+            const response = await updateTicketAPI(viewTicket._id, { assignedTeam: teamName }, reqHeader);
+            if (response.status === 200) {
+                setViewTicket(response.data);
+                // Update the ticket in the list as well
+                setTickets(prev => prev.map(t => t._id === viewTicket._id ? response.data : t));
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Failed to assign team");
+        } finally {
+            setAssigning(false);
         }
     };
 
@@ -150,11 +186,24 @@ function TicketsPage() {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <div className="flex items-center space-x-2">
-                                                        <div className="w-6 h-6 bg-teal-100 rounded-full flex items-center justify-center text-[10px] font-bold text-teal-700">
-                                                            {ticket.assignedTo?.name?.charAt(0) || "?"}
-                                                        </div>
-                                                        <span className="text-sm text-gray-700">{ticket.assignedTo?.name || "Unassigned"}</span>
+                                                    <div className="flex flex-col">
+                                                        {ticket.assignedTo ? (
+                                                            <div className="flex items-center space-x-2">
+                                                                <div className="w-6 h-6 bg-teal-100 rounded-full flex items-center justify-center text-[10px] font-bold text-teal-700 shadow-sm">
+                                                                    {ticket.assignedTo.name?.charAt(0)}
+                                                                </div>
+                                                                <span className="text-sm font-medium text-gray-700">{ticket.assignedTo.name}</span>
+                                                            </div>
+                                                        ) : ticket.assignedTeam ? (
+                                                            <div className="flex items-center space-x-2">
+                                                                <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center text-[10px] font-bold text-emerald-700 shadow-sm">
+                                                                    T
+                                                                </div>
+                                                                <span className="text-sm font-bold text-emerald-600 italic">{ticket.assignedTeam}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-xs text-gray-400 italic">Unassigned</span>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
@@ -246,7 +295,24 @@ function TicketsPage() {
 
                             <div className="grid grid-cols-2 gap-6 pt-6 border-t border-gray-50">
                                 <div>
-                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Assigned To</h3>
+                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Assigned Team</h3>
+                                    <div className="flex items-center space-x-2">
+                                        <select
+                                            className="text-sm font-bold text-gray-800 bg-teal-50 border border-teal-100 px-3 py-1.5 rounded-lg outline-none focus:ring-2 focus:ring-teal-500/20 disabled:opacity-50"
+                                            value={viewTicket.assignedTeam || ""}
+                                            onChange={(e) => handleQuickAssign(e.target.value)}
+                                            disabled={assigning}
+                                        >
+                                            <option value="">Unassigned</option>
+                                            {teams.map(team => (
+                                                <option key={team._id} value={team.name}>{team.name}</option>
+                                            ))}
+                                        </select>
+                                        {assigning && <FiLoader className="w-4 h-4 animate-spin text-teal-500" />}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Assigned To Agent</h3>
                                     <div className="flex items-center space-x-2">
                                         <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center text-xs font-bold text-teal-700">
                                             {viewTicket.assignedTo?.name?.charAt(0) || "?"}
@@ -254,6 +320,9 @@ function TicketsPage() {
                                         <span className="text-sm font-bold text-gray-800">{viewTicket.assignedTo?.name || "Unassigned"}</span>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6 pt-6 border-t border-gray-50">
                                 <div>
                                     <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Reported By</h3>
                                     <div className="flex items-center space-x-2">
@@ -263,11 +332,13 @@ function TicketsPage() {
                                         <span className="text-sm font-bold text-gray-800">{viewTicket.createdBy?.name || "System"}</span>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-6 text-[11px] text-gray-400">
-                                <div className="flex items-center"><FiCalendar className="mr-1.5" /> Created: {new Date(viewTicket.createdAt).toLocaleString()}</div>
-                                <div className="flex items-center"><FiClock className="mr-1.5" /> Updated: {new Date(viewTicket.updatedAt).toLocaleString()}</div>
+                                <div>
+                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Timestamps</h3>
+                                    <div className="space-y-1 text-[10px] text-gray-400">
+                                        <div className="flex items-center"><FiCalendar className="mr-1.5" /> Created: {new Date(viewTicket.createdAt).toLocaleString()}</div>
+                                        <div className="flex items-center"><FiClock className="mr-1.5" /> Updated: {new Date(viewTicket.updatedAt).toLocaleString()}</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -279,7 +350,10 @@ function TicketsPage() {
                             >
                                 Close
                             </button>
-                            <button className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-bold rounded-xl transition shadow-sm">
+                            <button
+                                onClick={() => navigate(`/ticket/${viewTicket._id}`)}
+                                className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-bold rounded-xl transition shadow-sm"
+                            >
                                 Full Details
                             </button>
                         </div>

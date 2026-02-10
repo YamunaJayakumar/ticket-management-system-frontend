@@ -1,55 +1,50 @@
-import React, { useState } from "react";
-import { FiSearch, FiBell, FiChevronDown, FiPlus, FiBarChart2, FiAlertTriangle, FiCheckCircle, FiClock } from "react-icons/fi";
+import React, { useState, useEffect } from "react";
+import { FiBarChart2, FiAlertTriangle, FiCheckCircle, FiClock, FiLoader } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
-
-const fakeDashboardData = {
-  openTickets: 20,
-  activeTickets: 30,
-  totalIncidents: 21,
-  criticalIncidents: 0,
-  slaBreaches: 0,
-  onSchedule: 0,
-  systemHealth: 100,
-  slaCompliance: 4.5,
-  breached: 14,
-  breachedIncidents: 7,
-  atRisk: 0,
-  slaAchieved: 1,
-  avgResolution: "21h",
-  incidentsByStatus: {
-    Open: 5,
-    "In Progress": 10,
-    Closed: 6
-  },
-  incidentsByPriority: {
-    Critical: 0,
-    High: 3,
-    Medium: 8,
-    Low: 10
-  },
-  weeklyVolume: [
-    { day: "Mon", incoming: 12, resolved: 10 },
-    { day: "Tue", incoming: 15, resolved: 13 },
-    { day: "Wed", incoming: 8, resolved: 11 },
-    { day: "Thu", incoming: 18, resolved: 15 },
-    { day: "Fri", incoming: 14, resolved: 16 },
-    { day: "Sat", incoming: 5, resolved: 8 },
-    { day: "Sun", incoming: 3, resolved: 5 },
-  ],
-};
+import { getDashboardAPI } from "../../services/AllAPI";
 
 function DashboardAdmin() {
   const navigate = useNavigate();
-  const [dashboardData] = useState(fakeDashboardData);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("This Month");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const reqHeader = { Authorization: `Bearer ${token}` };
+      const response = await getDashboardAPI(reqHeader);
+      if (response.status === 200) {
+        setDashboardData(response.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login");
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <FiLoader className="w-10 h-10 text-teal-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!dashboardData) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -160,7 +155,7 @@ function DashboardAdmin() {
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-gray-900">Incidents by Status</h3>
-                  <span className="text-xs text-gray-500">21 total</span>
+                  <span className="text-xs text-gray-500">{dashboardData.totalIncidents} total</span>
                 </div>
                 <p className="text-xs text-gray-600 mb-4">Current distribution</p>
                 <div className="space-y-3">
@@ -177,7 +172,7 @@ function DashboardAdmin() {
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-gray-900">Incidents by Priority</h3>
-                  <span className="text-xs text-gray-500">21 total</span>
+                  <span className="text-xs text-gray-500">{dashboardData.totalIncidents} total</span>
                 </div>
                 <p className="text-xs text-gray-600 mb-4">Breakdown by priority level</p>
                 <div className="space-y-3">
@@ -204,7 +199,9 @@ function DashboardAdmin() {
               {/* Chart Area */}
               <div className="space-y-4 mt-6">
                 {dashboardData.weeklyVolume.map((day) => {
-                  const maxValue = 20;
+                  const incomingValues = dashboardData.weeklyVolume.map(v => v.incoming);
+                  const resolvedValues = dashboardData.weeklyVolume.map(v => v.resolved);
+                  const maxValue = Math.max(...incomingValues, ...resolvedValues, 5);
                   const incomingWidth = (day.incoming / maxValue) * 100;
                   const resolvedWidth = (day.resolved / maxValue) * 100;
 
@@ -330,7 +327,7 @@ function DashboardAdmin() {
 
               {/* View Breached Button */}
               <button className="w-full bg-[#1e3a4c] hover:bg-[#2a4a5e] text-white py-3 px-4 rounded-lg transition text-sm font-medium">
-                View Breached (14)
+                View Breached ({dashboardData.slaBreaches})
               </button>
             </div>
           </div>
