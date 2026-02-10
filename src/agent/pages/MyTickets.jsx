@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FiEye,
@@ -8,46 +8,7 @@ import {
   FiMoreVertical
 } from "react-icons/fi";
 import Navbar from "../../components/Navbar";
-
-/* ------------------ DUMMY DATA ------------------ */
-const dummyTickets = [
-  {
-    _id: "TCKT001",
-    title: "Unable to login to dashboard",
-    description: "User reports login failure after password reset.",
-    status: { name: "Open" },
-    priority: { name: "High" },
-    category: { name: "Authentication" },
-    assignedTo: { name: "Agent Alex" },
-    createdBy: { name: "John Doe" },
-    createdAt: "2026-02-01T10:30:00Z",
-    updatedAt: "2026-02-02T09:45:00Z",
-  },
-  {
-    _id: "TCKT002",
-    title: "Payment not reflected",
-    description: "Payment done but order still pending.",
-    status: { name: "In Progress" },
-    priority: { name: "Medium" },
-    category: { name: "Billing" },
-    assignedTo: { name: "Agent Alex" },
-    createdBy: { name: "Priya Sharma" },
-    createdAt: "2026-02-03T14:20:00Z",
-    updatedAt: "2026-02-04T11:10:00Z",
-  },
-  {
-    _id: "TCKT003",
-    title: "App crashes on launch",
-    description: "Mobile app crashes immediately after opening.",
-    status: { name: "Resolved" },
-    priority: { name: "Critical" },
-    category: { name: "Mobile App" },
-    assignedTo: { name: "Agent Alex" },
-    createdBy: { name: "System" },
-    createdAt: "2026-02-05T08:10:00Z",
-    updatedAt: "2026-02-05T16:40:00Z",
-  },
-];
+import { getAgentTicketsAPI } from "../../services/AllAPI";
 
 /* ------------------ STYLES ------------------ */
 const getStatusStyle = (status) => {
@@ -82,9 +43,31 @@ const getPriorityStyle = (priority) => {
 
 function MyTickets() {
   const navigate = useNavigate();
-  const [tickets] = useState(dummyTickets);
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewTicket, setViewTicket] = useState(null);
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
+
+  const fetchTickets = async () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const reqHeader = { "Authorization": `Bearer ${token}` };
+      try {
+        const result = await getAgentTicketsAPI(reqHeader);
+        if (result.status === 200) {
+          setTickets(result.data);
+        }
+      } catch (err) {
+        console.error("Error fetching agent tickets:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   const filteredTickets = tickets.filter(
     (t) =>
@@ -234,9 +217,9 @@ function MyTickets() {
 
             <div className="p-4 border-t bg-gray-50 flex justify-end">
               <button
-                onClick={() => navigate("/agent/tickets/details")}
+                onClick={() => navigate(`/agent/tickets/details/${viewTicket._id}`)}
                 className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-sm font-bold"
-                
+
               >
                 Open Full Ticket
               </button>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from "../components/Navbar";
 import { FiClock, FiUser, FiTag, FiMessageSquare, FiActivity, FiArrowLeft, FiMoreVertical, FiPaperclip, FiCheck } from "react-icons/fi";
+import jwtDecode from 'jwt-decode';
 import { viewTicketAPI, updateTicketAPI, getTeamsAPI, getPrioritiesAPI, getStatusAPI, getAgentListAPI } from '../services/AllAPI';
 
 function TicketDetails() {
@@ -209,17 +210,22 @@ function TicketDetails() {
                       ticket.comments.map((c, idx) => (
                         <div key={idx} className="flex space-x-4 animate-fadeIn">
                           <div className="flex-shrink-0">
-                            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-600">
-                              {c.user?.charAt(0)?.toUpperCase() || "U"}
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${c.commentedBy?.role === 'agent' ? 'bg-teal-100 text-teal-600' : 'bg-gray-100 text-gray-600'}`}>
+                              {c.commentedBy?.name?.charAt(0)?.toUpperCase() || "U"}
                             </div>
                           </div>
                           <div className="flex-1">
-                            <div className="bg-gray-50 p-4 rounded-2xl rounded-tl-none border border-gray-100">
+                            <div className={`p-4 rounded-2xl rounded-tl-none border ${c.commentedBy?.role === 'agent' ? 'bg-teal-50/50 border-teal-100' : 'bg-gray-50 border-gray-100'}`}>
                               <div className="flex items-center justify-between mb-1">
-                                <span className="text-sm font-bold text-gray-900">@{c.user}</span>
+                                <span className="text-sm font-bold text-gray-900">
+                                  {c.commentedBy?.name || "User"}
+                                  {c.commentedBy?.role === 'agent' && (
+                                    <span className="ml-2 text-[10px] bg-teal-600 text-white px-2 py-0.5 rounded uppercase tracking-widest">Agent</span>
+                                  )}
+                                </span>
                                 <span className="text-xs text-gray-400">{new Date(c.createdAt).toLocaleString()}</span>
                               </div>
-                              <p className="text-gray-700 text-sm leading-relaxed">{c.comment}</p>
+                              <p className="text-gray-700 text-sm leading-relaxed">{c.message}</p>
                             </div>
                           </div>
                         </div>
@@ -265,21 +271,29 @@ function TicketDetails() {
                     <span className="text-sm font-bold text-gray-800">{ticket.createdBy?.name || "N/A"}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-500 uppercase">Assignee</span>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-teal-100 rounded-full flex items-center justify-center text-xs font-bold text-teal-700">
-                        {ticket.assignedTo?.name?.charAt(0) || "?"}
-                      </div>
-                      <span className="text-sm font-bold text-gray-800">{ticket.assignedTo?.name || "Unassigned"}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-gray-500 uppercase">Category</span>
                     <span className="text-sm font-bold text-gray-800 bg-gray-100 px-2 py-1 rounded">{ticket.category?.name || "N/A"}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-500 uppercase">Assigned Team</span>
-                    <span className="text-sm font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded border border-teal-100">{ticket.assignedTeam || "Unassigned"}</span>
+                    <span className="text-xs font-semibold text-gray-500 uppercase">Handled By</span>
+                    <div className="flex items-center space-x-2">
+                      {ticket.assignedTo ? (
+                        <>
+                          <div className="w-6 h-6 bg-teal-100 rounded-full flex items-center justify-center text-xs font-bold text-teal-700">
+                            {ticket.assignedTo.name?.charAt(0)}
+                          </div>
+                          <span className="text-sm font-bold text-gray-800">{ticket.assignedTo.name}</span>
+                        </>
+                      ) : ticket.assignedTeam ? (
+                        <span className="text-sm font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded border border-teal-100">
+                          {ticket.assignedTeam} Team
+                        </span>
+                      ) : (
+                        <span className="text-sm font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100">
+                          Pending Assignment
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t border-gray-50">
                     <span className="text-xs font-semibold text-gray-500 uppercase">Created</span>

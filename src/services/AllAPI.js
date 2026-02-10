@@ -271,3 +271,27 @@ export const getAllUsersAPI = async (reqHeader) => {
     reqHeader
   );
 };
+// --------------------------agent-----------------
+export const getAgentDashboardAPI = async (reqHeader) => {
+  return await commonAPI('GET', `${serverURL}/agent/dashboard`, "", reqHeader)
+}
+
+export const getAgentTicketsAPI = async (reqHeader) => {
+  return await commonAPI('GET', `${serverURL}/agent/tickets`, "", reqHeader)
+}
+
+export const getAgentTicketDetailsAPI = async (id, reqHeader) => {
+  return await commonAPI('GET', `${serverURL}/agent/tickets/${id}`, "", reqHeader)
+}
+
+export const updateAgentTicketStatusAPI = async (id, reqBody, reqHeader) => {
+  return await commonAPI('PATCH', `${serverURL}/agent/tickets/${id}/status`, reqBody, reqHeader)
+}
+
+export const addAgentCommentAPI = async (id, reqBody, reqHeader) => {
+  return await commonAPI('POST', `${serverURL}/agent/tickets/${id}/comments`, reqBody, reqHeader)
+}
+
+export const deleteAgentCommentAPI = async (ticketId, commentId, reqHeader) => {
+  return await commonAPI('DELETE', `${serverURL}/agent/tickets/${ticketId}/comments/${commentId}`, {}, reqHeader)
+}

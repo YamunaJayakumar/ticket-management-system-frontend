@@ -5,7 +5,7 @@ import { getAgentListAPI, getCategoriesAPI, getTeamsAPI, addTeamAPI, updateTeamA
 function TeamComponent() {
     const [teams, setTeams] = useState([]);
     const [agents, setAgents] = useState([]);
-    const [categories, setCategories] = useState(["General", "Software", "Hardware", "Network", "Billing", "Critical Systems", "Security"]);
+    const [categories, setCategories] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [showMemberModal, setShowMemberModal] = useState(false);
     const [editingTeam, setEditingTeam] = useState(null);
@@ -27,7 +27,7 @@ function TeamComponent() {
 
             const catRes = await getCategoriesAPI(reqHeader);
             if (catRes.status === 200) {
-                const catData = Array.isArray(catRes.data) ? catRes.data.map(c => typeof c === 'string' ? c : c.name) : categories;
+                const catData = Array.isArray(catRes.data) ? catRes.data.map(c => typeof c === 'string' ? c : c.name) : [];
                 setCategories(catData);
             }
 

@@ -14,6 +14,7 @@ function ViewTicket() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statuses, setStatuses] = useState([]);
   const [priorities, setPriorities] = useState([]);
+  const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const ticketsPerPage = 10;
 
@@ -24,9 +25,9 @@ function ViewTicket() {
       fetchTickets();
     } else {
       setLoading(false);
-      navigate("/login"); // Redirect if no token
+      navigate("/login");
     }
-  }, [statusFilter, priorityFilter]);
+  }, [statusFilter, priorityFilter, sortBy]);
 
   // Handle search with a slight delay or on Enter
   useEffect(() => {
@@ -62,7 +63,8 @@ function ViewTicket() {
       const queryParams = {
         status: statusFilter,
         priority: priorityFilter,
-        search: searchQuery
+        search: searchQuery,
+        sort: sortBy
       };
       const res = await getTicketsListAPI(queryParams, reqHeader);
       setTickets(res.data || []);
@@ -121,10 +123,14 @@ function ViewTicket() {
               </div>
 
               <div className="flex items-center gap-2 border bg-white rounded-lg px-3 py-1.5 min-w-[150px]">
-                <select className="text-sm bg-transparent focus:outline-none w-full border-none p-0">
-                  <option>Sort By: Newest</option>
-                  <option>Sort By: Oldest</option>
-                  <option>Sort By: Priority</option>
+                <select
+                  className="text-sm bg-transparent focus:outline-none w-full border-none p-0 cursor-pointer"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="newest">Sort By: Newest</option>
+                  <option value="oldest">Sort By: Oldest</option>
+                  <option value="priority">Sort By: Priority</option>
                 </select>
               </div>
 

@@ -14,9 +14,16 @@ function TicketsPage() {
     const [assigning, setAssigning] = useState(false);
 
     useEffect(() => {
-        fetchTickets();
         fetchTeams();
     }, []);
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            fetchTickets(searchQuery);
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery]);
 
     const fetchTeams = async () => {
         try {
@@ -29,11 +36,11 @@ function TicketsPage() {
         }
     };
 
-    const fetchTickets = async () => {
+    const fetchTickets = async (search = "") => {
         try {
             const token = localStorage.getItem("token");
             const headers = { Authorization: `Bearer ${token}` };
-            const result = await getTicketsListAPI({}, headers);
+            const result = await getTicketsListAPI({ search }, headers);
             if (result.status === 200) {
                 setTickets(result.data);
             }

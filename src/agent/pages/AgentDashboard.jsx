@@ -1,30 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FiBarChart2, FiAlertTriangle, FiCheckCircle, FiClock } from "react-icons/fi";
 import Navbar from "../../components/Navbar";
-
+import { getAgentDashboardAPI } from "../../services/AllAPI";
 
 function AgentDashboard() {
 
-  // ✅ Dummy Agent Data
-  const [dashboardData] = useState({
-    totalTickets: 18,
-    highPriority: 5,
-    ticketByStatus: {
-      Open: 6,
-      "In Progress": 7,
-      Resolved: 3,
-      Closed: 2
-    },
-    ticketsPerDay: [
-      { date: "Mon", count: 2 },
-      { date: "Tue", count: 4 },
-      { date: "Wed", count: 3 },
-      { date: "Thu", count: 5 },
-      { date: "Fri", count: 2 },
-      { date: "Sat", count: 1 },
-      { date: "Sun", count: 1 }
-    ]
+  const [dashboardData, setDashboardData] = useState({
+    totalTickets: 0,
+    highPriority: 0,
+    ticketByStatus: {},
+    ticketsPerDay: []
   });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const reqHeader = { "Authorization": `Bearer ${token}` };
+      try {
+        const result = await getAgentDashboardAPI(reqHeader);
+        if (result.status === 200) {
+          setDashboardData(result.data);
+        }
+      } catch (err) {
+        console.error("Error fetching agent dashboard metrics:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center h-[calc(100-80px)] mt-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -140,15 +159,14 @@ function AgentDashboard() {
 
                     <div className="bg-gray-100 rounded-full h-1.5 mt-1">
                       <div
-                        className={`h-1.5 rounded-full ${
-                          status === "Open"
+                        className={`h-1.5 rounded-full ${status === "Open"
                             ? "bg-blue-500"
                             : status === "In Progress"
-                            ? "bg-yellow-500"
-                            : status === "Resolved"
-                            ? "bg-green-500"
-                            : "bg-gray-400"
-                        }`}
+                              ? "bg-yellow-500"
+                              : status === "Resolved"
+                                ? "bg-green-500"
+                                : "bg-gray-400"
+                          }`}
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
