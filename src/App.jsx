@@ -11,6 +11,9 @@ import DashboardAdmin from "./admin/pages/DashboardAdmin"
 import SettingPage from "./admin/pages/SettingPage"
 import AssignTicketPage from "./admin/pages/AssignTicketPage"
 import AgentForm from "./admin/pages/AgentForm"
+import AgentDashboard from "./agent/pages/AgentDashboard"
+import MyTickets from "./agent/pages/MyTickets"
+import AgentTicketDetails from "./agent/pages/AgentTicketDetails"
 
 
 
@@ -40,6 +43,13 @@ function App() {
         <Route path="/admin/agent/add" element={<AgentForm />}></Route>
 
         <Route path="/admin/agent/edit/:id" element={<AgentForm />}></Route>
+
+        {/* agent pages */}
+        <Route path="/agent/dashboard" element={<AgentDashboard />}></Route>
+
+         <Route path="/agent/tickets" element={<MyTickets />}></Route>
+
+         <Route path="/agent/tickets/details" element={<AgentTicketDetails/>}></Route>
 
 
 
