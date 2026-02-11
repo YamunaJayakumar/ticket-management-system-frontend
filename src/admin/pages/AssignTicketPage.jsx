@@ -40,7 +40,8 @@ function AssignTicketPage() {
   };
 
   const handleAssign = async (ticketId) => {
-    if (!selectedTeam[ticketId]) {
+    const teamId = selectedTeam[ticketId];
+    if (!teamId) {
       alert("Select a team first");
       return;
     }
@@ -49,9 +50,11 @@ function AssignTicketPage() {
     try {
       const token = localStorage.getItem("token");
       const reqHeader = { Authorization: `Bearer ${token}` };
-      const teamName = selectedTeam[ticketId];
 
-      const response = await updateTicketAPI(ticketId, { assignedTeam: teamName }, reqHeader);
+      const team = teams.find(t => t._id === teamId);
+      const teamName = team ? team.name : "Team";
+
+      const response = await updateTicketAPI(ticketId, { assignedTeam: teamId }, reqHeader);
 
       if (response.status === 200) {
         setAssignedTickets({
@@ -152,7 +155,7 @@ function AssignTicketPage() {
                                 >
                                   <option value="">Choose Team</option>
                                   {teams.map((team) => (
-                                    <option key={team._id} value={team.name}>
+                                    <option key={team._id} value={team._id}>
                                       {team.name}
                                     </option>
                                   ))}

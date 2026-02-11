@@ -27,8 +27,7 @@ function TeamComponent() {
 
             const catRes = await getCategoriesAPI(reqHeader);
             if (catRes.status === 200) {
-                const catData = Array.isArray(catRes.data) ? catRes.data.map(c => typeof c === 'string' ? c : c.name) : [];
-                setCategories(catData);
+                setCategories(catRes.data);
             }
 
             const teamRes = await getTeamsAPI(reqHeader);
@@ -45,7 +44,7 @@ function TeamComponent() {
                 name: team.name,
                 description: team.description,
                 selectedAgents: team.members?.map(m => m._id) || [],
-                selectedCategories: team.categories || []
+                selectedCategories: categories.filter(c => c.assignedTeam?._id === team._id).map(c => c._id)
             });
         } else {
             setEditingTeam(null);
@@ -90,13 +89,13 @@ function TeamComponent() {
             if (editingTeam) {
                 const result = await updateTeamAPI(editingTeam._id, payload, reqHeader);
                 if (result.status === 200) {
-                    setTeams(teams.map(t => t._id === editingTeam._id ? result.data : t));
+                    await fetchData(); // Refresh to get updated category links
                     setShowModal(false);
                 }
             } else {
                 const result = await addTeamAPI(payload, reqHeader);
                 if (result.status === 200) {
-                    setTeams([...teams, result.data]);
+                    await fetchData(); // Refresh to get updated category links
                     setShowModal(false);
                 }
             }
@@ -151,7 +150,7 @@ function TeamComponent() {
                                         <h4 className="font-bold text-gray-900 text-lg">{team.name}</h4>
                                         <div className="flex items-center text-xs text-gray-400 font-medium">
                                             <span className="flex items-center mr-3"><FiUsers className="mr-1" /> {team.members?.length || 0} Agents</span>
-                                            <span className="flex items-center"><FiGrid className="mr-1" /> {team.categories?.length || 0} Categories</span>
+                                            <span className="flex items-center"><FiGrid className="mr-1" /> {categories.filter(c => c.assignedTeam?._id === team._id).length} Categories</span>
                                         </div>
                                     </div>
                                 </div>
@@ -176,9 +175,9 @@ function TeamComponent() {
                             </p>
 
                             <div className="flex flex-wrap gap-1.5 pt-4 border-t border-gray-50 mb-6">
-                                {team.categories?.map((cat, i) => (
+                                {categories.filter(c => c.assignedTeam?._id === team._id).map((cat, i) => (
                                     <span key={i} className="px-2.5 py-1 text-[10px] font-bold bg-teal-50/50 text-teal-700 rounded-lg border border-teal-100/50 uppercase tracking-tighter">
-                                        {cat}
+                                        {cat.name}
                                     </span>
                                 ))}
                             </div>
@@ -312,8 +311,8 @@ function TeamComponent() {
                                                 setFormData({ ...formData, selectedCategories: selected });
                                             }}
                                         >
-                                            {categories.map((cat, i) => (
-                                                <option key={i} value={cat}>{cat}</option>
+                                            {categories.map((cat) => (
+                                                <option key={cat._id} value={cat._id}>{cat.name}</option>
                                             ))}
                                         </select>
                                     </div>

@@ -22,8 +22,7 @@ function CategoryComponent() {
 
       const teamRes = await getTeamsAPI(reqHeader);
       if (teamRes.status === 200) {
-        const teamNames = teamRes.data.map((t) => t.name);
-        setTeams(teamNames);
+        setTeams(teamRes.data);
       }
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -36,7 +35,7 @@ function CategoryComponent() {
       setFormData({
         name: category.name,
         description: category.description,
-        assignedTeam: category.assignedTeam || "",
+        assignedTeam: category.assignedTeam?._id || "",
       });
     } else {
       setEditingCategory(null);
@@ -128,7 +127,7 @@ function CategoryComponent() {
                       <div className="w-6 h-6 bg-indigo-50 rounded-md flex items-center justify-center text-indigo-500">
                         <FiUsers className="w-3 h-3" />
                       </div>
-                      <span className="text-sm font-semibold text-gray-700">{category.assignedTeam || "Unassigned"}</span>
+                      <span className="text-sm font-semibold text-gray-700">{category.assignedTeam?.name || "Unassigned"}</span>
                     </div>
                   </td>
                   <td className="px-6 py-5">
@@ -209,8 +208,8 @@ function CategoryComponent() {
                     onChange={(e) => setFormData({ ...formData, assignedTeam: e.target.value })}
                   >
                     <option value="">Select a team</option>
-                    {teams.map((team, idx) => (
-                      <option key={idx} value={team}>{team}</option>
+                    {teams.map((team) => (
+                      <option key={team._id} value={team._id}>{team.name}</option>
                     ))}
                   </select>
                   <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">

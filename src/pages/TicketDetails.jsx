@@ -43,7 +43,7 @@ function TicketDetails() {
       setTicket(response.data);
       setStatus(response.data.status?._id || "");
       setPriority(response.data.priority?._id || "");
-      setAssignedTeam(response.data.assignedTeam || "");
+      setAssignedTeam(response.data.assignedTeam?._id || ""); // Use ID
       setAssignedTo(response.data.assignedTo?._id || "");
       setLoading(false);
     } catch (err) {
@@ -323,7 +323,7 @@ function TicketDetails() {
                         </>
                       ) : ticket.assignedTeam ? (
                         <span className="text-sm font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded border border-teal-100">
-                          {ticket.assignedTeam} Team
+                          {ticket.assignedTeam.name} Team
                         </span>
                       ) : (
                         <span className="text-sm font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100">
@@ -429,8 +429,8 @@ function TicketDetails() {
                             className="w-full bg-[#2a4a5e] border-none rounded-lg text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-teal-500 transition cursor-pointer"
                           >
                             <option value="">Unassigned</option>
-                            {teams.map((team, idx) => (
-                              <option key={idx} value={team.name}>{team.name}</option>
+                            {teams.map((team) => (
+                              <option key={team._id} value={team._id}>{team.name}</option>
                             ))}
                           </select>
                         </div>
@@ -445,7 +445,11 @@ function TicketDetails() {
                           >
                             <option value="">Select Agent</option>
                             {allAgents
-                              .filter(agent => agent.teamName === assignedTeam)
+                              .filter(agent => {
+                                // Find team name for filtering
+                                const team = teams.find(t => t._id === assignedTeam);
+                                return agent.teamName === team?.name;
+                              })
                               .map(agent => (
                                 <option key={agent._id} value={agent._id}>
                                   {agent.name}

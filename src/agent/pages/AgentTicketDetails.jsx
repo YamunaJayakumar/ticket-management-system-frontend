@@ -249,7 +249,7 @@ function AgentTicketDetails() {
                   <FiClock className="mr-2" /> Created {new Date(ticket.createdAt).toLocaleString()}
                 </div>
                 <div className="flex items-center text-[11px] text-gray-500">
-                  <FiCheckCircle className="mr-2" /> {ticket.assignedTo ? "Assigned to You" : `Assigned to ${ticket.assignedTeam} Team`}
+                  <FiCheckCircle className="mr-2" /> {ticket.assignedTo ? "Assigned to You" : `Assigned to ${ticket.assignedTeam?.name} Team`}
                 </div>
               </div>
             </div>
