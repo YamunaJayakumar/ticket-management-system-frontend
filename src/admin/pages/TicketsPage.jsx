@@ -73,7 +73,7 @@ function TicketsPage() {
         try {
             const token = localStorage.getItem("token");
             const reqHeader = { Authorization: `Bearer ${token}` };
-            const response = await updateTicketAPI(viewTicket._id, { assignedTeam: teamName }, reqHeader);
+            const response = await updateTicketAPI(viewTicket._id, { assignedTeam: teamId }, reqHeader);
             if (response.status === 200) {
                 setViewTicket(response.data);
                 // Update the ticket in the list as well
@@ -206,7 +206,7 @@ function TicketsPage() {
                                                                 <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center text-[10px] font-bold text-emerald-700 shadow-sm">
                                                                     T
                                                                 </div>
-                                                                <span className="text-sm font-bold text-emerald-600 italic">{ticket.assignedTeam}</span>
+                                                                <span className="text-sm font-bold text-emerald-600 italic">{ticket.assignedTeam.name}</span>
                                                             </div>
                                                         ) : (
                                                             <span className="text-xs text-gray-400 italic">Unassigned</span>
@@ -306,13 +306,13 @@ function TicketsPage() {
                                     <div className="flex items-center space-x-2">
                                         <select
                                             className="text-sm font-bold text-gray-800 bg-teal-50 border border-teal-100 px-3 py-1.5 rounded-lg outline-none focus:ring-2 focus:ring-teal-500/20 disabled:opacity-50"
-                                            value={viewTicket.assignedTeam || ""}
+                                            value={viewTicket.assignedTeam?._id || ""}
                                             onChange={(e) => handleQuickAssign(e.target.value)}
                                             disabled={assigning}
                                         >
                                             <option value="">Unassigned</option>
                                             {teams.map(team => (
-                                                <option key={team._id} value={team.name}>{team.name}</option>
+                                                <option key={team._id} value={team._id}>{team.name}</option>
                                             ))}
                                         </select>
                                         {assigning && <FiLoader className="w-4 h-4 animate-spin text-teal-500" />}
