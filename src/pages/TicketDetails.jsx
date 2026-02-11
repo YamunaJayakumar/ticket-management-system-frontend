@@ -72,9 +72,7 @@ function TicketDetails() {
 
   useEffect(() => {
     fetchTicket();
-    if (loggedInUser?.role?.toLowerCase() === "admin") {
-      fetchDropdownData();
-    }
+    fetchDropdownData();
   }, [id]);
 
   const canUpdate = loggedInUser?.role?.toLowerCase() === "admin" || ticket?.assignedTo?._id === loggedInUser?.id;
@@ -97,6 +95,24 @@ function TicketDetails() {
     } catch (err) {
       console.error(err);
       alert("Failed to update ticket");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleCloseTicket = async (closedStatusId) => {
+    setUpdating(true);
+    try {
+      const reqHeader = { Authorization: `Bearer ${token}` };
+      const reqBody = { status: closedStatusId };
+      const response = await updateTicketAPI(id, reqBody, reqHeader);
+      if (response.status === 200) {
+        setTicket(response.data);
+        alert("Ticket closed successfully!");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to close ticket");
     } finally {
       setUpdating(false);
     }
@@ -159,6 +175,27 @@ function TicketDetails() {
               Back to Tickets
             </button>
             <div className="flex items-center space-x-3">
+              {/* Manual User Closure Button */}
+              {loggedInUser?.id === ticket.createdBy?._id &&
+                ticket.status?.name?.toLowerCase() === 'resolved' &&
+                loggedInUser?.role?.toLowerCase() !== 'admin' && (
+                  <button
+                    onClick={() => {
+                      const closedStatus = statuses.find(s => s.name.toLowerCase() === 'closed');
+                      if (closedStatus) {
+                        if (window.confirm("Are you happy with the resolution? Click OK to close the ticket.")) {
+                          handleCloseTicket(closedStatus._id);
+                        }
+                      } else {
+                        alert("Closed status not found in system.");
+                      }
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-md flex items-center gap-2"
+                  >
+                    <FiCheck className="w-4 h-4" />
+                    Close Ticket
+                  </button>
+                )}
               <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white rounded-md border border-transparent hover:border-gray-200 transition">
                 <FiMoreVertical />
               </button>

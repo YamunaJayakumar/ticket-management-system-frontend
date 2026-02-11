@@ -61,10 +61,10 @@ function Login() {
     <div className="min-h-screen bg-gradient-to-br from-[#0a0f1e] via-[#111827] to-[#0f1419] flex items-center justify-center p-4">
       <div className="w-full max-w-6xl bg-gradient-to-br from-[#1a1f2e]/90 to-[#111827]/90 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-gray-800/50">
         <div className="grid md:grid-cols-2 gap-0">
-          
+
           {/* Left Section - Branding & Features */}
           <div className="p-12 flex flex-col justify-center space-y-8 border-r border-gray-800/50">
-            
+
             {/* Logo and Tagline */}
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
@@ -125,7 +125,7 @@ function Login() {
           {/* Right Section - Login Form */}
           <div className="p-12 flex flex-col justify-center">
             <div className="space-y-6">
-              
+
               {/* Access Workspace Header */}
               <div className="text-center space-y-2">
                 <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-800/50 rounded-full mb-2">
@@ -145,10 +145,10 @@ function Login() {
                     className="w-full bg-white hover:bg-gray-50 text-gray-800 font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="0.5" y="0.5" width="20" height="20" rx="2" fill="#F25022"/>
-                      <rect x="11.5" y="0.5" width="9" height="9" fill="#7FBA00"/>
-                      <rect x="0.5" y="11.5" width="9" height="9" fill="#00A4EF"/>
-                      <rect x="11.5" y="11.5" width="9" height="9" fill="#FFB900"/>
+                      <rect x="0.5" y="0.5" width="20" height="20" rx="2" fill="#F25022" />
+                      <rect x="11.5" y="0.5" width="9" height="9" fill="#7FBA00" />
+                      <rect x="0.5" y="11.5" width="9" height="9" fill="#00A4EF" />
+                      <rect x="11.5" y="11.5" width="9" height="9" fill="#FFB900" />
                     </svg>
                     <span>Continue with Microsoft (SSO)</span>
                   </button>

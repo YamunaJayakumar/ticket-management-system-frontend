@@ -145,7 +145,8 @@ function AgentTicketDetails() {
               <select
                 value={ticket.status?._id}
                 onChange={handleStatusChange}
-                className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-bold text-gray-700 focus:ring-2 focus:ring-teal-500/20 outline-none"
+                disabled={ticket.status?.name?.toLowerCase() === 'closed'}
+                className={`px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-bold text-gray-700 focus:ring-2 focus:ring-teal-500/20 outline-none ${ticket.status?.name?.toLowerCase() === 'closed' ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {statuses.map(s => (
                   <option key={s._id} value={s._id}>{s.name}</option>
@@ -170,7 +171,7 @@ function AgentTicketDetails() {
                   }`}
               >
                 {/* Delete Button (Agent only) */}
-                {comment.commentedBy?.role === "agent" && (
+                {comment.commentedBy?.role === "agent" && ticket.status?.name?.toLowerCase() !== 'closed' && (
                   <button
                     onClick={() => handleDeleteComment(comment._id)}
                     className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1.5 rounded-md text-red-500 hover:bg-red-50 transition"
@@ -199,29 +200,35 @@ function AgentTicketDetails() {
             ))}
 
             {/* Add Comment Box */}
-            <div className="mt-6 bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-              <h3 className="text-sm font-bold text-gray-700 mb-2">
-                Add a resolution step or comment
-              </h3>
+            {ticket.status?.name?.toLowerCase() !== 'closed' ? (
+              <div className="mt-6 bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-700 mb-2">
+                  Add a resolution step or comment
+                </h3>
 
-              <div className="flex items-end gap-3">
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  rows={3}
-                  placeholder="Type your response..."
-                  className="flex-1 resize-none rounded-lg border border-gray-200 p-3 text-sm focus:ring-2 focus:ring-teal-500/20 focus:outline-none bg-gray-50"
-                />
+                <div className="flex items-end gap-3">
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    rows={3}
+                    placeholder="Type your response..."
+                    className="flex-1 resize-none rounded-lg border border-gray-200 p-3 text-sm focus:ring-2 focus:ring-teal-500/20 focus:outline-none bg-gray-50"
+                  />
 
-                <button
-                  onClick={handleAddComment}
-                  className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition shadow-md"
-                >
-                  <FiSend className="w-4 h-4" />
-                  Post
-                </button>
+                  <button
+                    onClick={handleAddComment}
+                    className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition shadow-md"
+                  >
+                    <FiSend className="w-4 h-4" />
+                    Post
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="mt-6 bg-amber-50 border border-amber-100 p-4 rounded-xl text-center">
+                <p className="text-sm text-amber-700 font-medium">This ticket is closed. No further comments or status updates can be made.</p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-6">

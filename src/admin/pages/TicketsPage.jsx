@@ -68,7 +68,7 @@ function TicketsPage() {
     };
 
     const handleQuickAssign = async (teamName) => {
-        if (!teamName || !viewTicket) return;
+        if (!viewTicket) return;
         setAssigning(true);
         try {
             const token = localStorage.getItem("token");

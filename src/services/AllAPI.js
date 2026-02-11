@@ -295,3 +295,16 @@ export const addAgentCommentAPI = async (id, reqBody, reqHeader) => {
 export const deleteAgentCommentAPI = async (ticketId, commentId, reqHeader) => {
   return await commonAPI('DELETE', `${serverURL}/agent/tickets/${ticketId}/comments/${commentId}`, {}, reqHeader)
 }
+
+// --------------------------Notifications-----------------
+export const getNotificationsAPI = async (reqHeader) => {
+  return await commonAPI('GET', `${serverURL}/notifications`, "", reqHeader)
+}
+
+export const markNotificationReadAPI = async (id, reqHeader) => {
+  return await commonAPI('PATCH', `${serverURL}/notifications/${id}/read`, {}, reqHeader)
+}
+
+export const clearNotificationsAPI = async (reqHeader) => {
+  return await commonAPI('DELETE', `${serverURL}/notifications/clear`, {}, reqHeader)
+}
